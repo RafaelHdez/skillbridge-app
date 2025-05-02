@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -178,8 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     // Botón para registrarse
                     OutlinedButton(
                       onPressed: () {
-                        // Navegar a pantalla de registro
-                        // Navigator.pushNamed(context, '/register');
+                        Navigator.pushNamed(context, '/register');
                       },
                       child: const Text('Crear una cuenta nueva'),
                     ),
