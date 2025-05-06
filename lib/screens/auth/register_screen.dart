@@ -1,5 +1,7 @@
 // lib/screens/auth/register_screen.dart
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../../services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -33,22 +35,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      // Simulamos proceso de registro
-      await Future.delayed(const Duration(seconds: 2));
+      try {
+        final user = await AuthService().registerWithEmailAndPassword(
+          _emailController.text.trim(),
+          _passwordController.text.trim(),
+          _nameController.text.trim(),
+          _userType,
+        );
 
-      setState(() => _isLoading = false);
-
-      // Aquí iría la conexión con Firebase Auth
-      // final authResult = await AuthService().registerWithEmailAndPassword(
-      //   _emailController.text,
-      //   _passwordController.text,
-      //   _userType,
-      //   _nameController.text,
-      // );
-
-      // if (authResult != null) {
-      //   Navigator.pushReplacementNamed(context, '/home');
-      // }
+        if (user != null) {
+          // Navegar a la pantalla principal según el tipo de usuario
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      } on FirebaseAuthException catch (e) {
+        String errorMessage;
+        switch (e.code) {
+          case 'email-already-in-use':
+            errorMessage = 'Ya existe una cuenta con este correo.';
+            break;
+          case 'weak-password':
+            errorMessage = 'La contraseña es demasiado débil.';
+            break;
+          case 'invalid-email':
+            errorMessage = 'Correo electrónico no válido.';
+            break;
+          default:
+            errorMessage = 'Error al registrar. Por favor intente nuevamente.';
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage)),
+        );
+      } finally {
+        setState(() => _isLoading = false);
+      }
     }
   }
 

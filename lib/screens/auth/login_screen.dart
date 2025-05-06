@@ -1,5 +1,7 @@
 // lib/screens/auth/login_screen.dart
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -26,20 +28,36 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      // Simulamos un proceso de autenticación
-      await Future.delayed(const Duration(seconds: 2));
+      try {
+        final user = await AuthService().signInWithEmailAndPassword(
+          _emailController.text.trim(),
+          _passwordController.text.trim(),
+        );
 
-      setState(() => _isLoading = false);
-
-      // Aquí iría la conexión con Firebase Auth
-      // final authResult = await AuthService().signInWithEmailAndPassword(
-      //   _emailController.text,
-      //   _passwordController.text,
-      // );
-
-      // if (authResult != null) {
-      //   Navigator.pushReplacementNamed(context, '/home');
-      // }
+        if (user != null) {
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      } on FirebaseAuthException catch (e) {
+        String errorMessage;
+        switch (e.code) {
+          case 'user-not-found':
+            errorMessage = 'No existe una cuenta con este correo.';
+            break;
+          case 'wrong-password':
+            errorMessage = 'Contraseña incorrecta.';
+            break;
+          case 'invalid-email':
+            errorMessage = 'Correo electrónico no válido.';
+            break;
+          default:
+            errorMessage = 'Error al iniciar sesión. Por favor intente nuevamente.';
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage)),
+        );
+      } finally {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
