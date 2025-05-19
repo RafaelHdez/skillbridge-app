@@ -2,10 +2,14 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:prueba/screens/home/client_home_screen.dart';
 import 'package:prueba/screens/home/freelancer_home_screen.dart';
+import 'package:prueba/screens/profile/badget/badge_provider.dart';
 import 'package:prueba/screens/profile/client_profile.dart';
 import 'package:prueba/screens/profile/freelancer_profile.dart';
+import 'package:prueba/screens/profile/screen/AssignedProjects.dart';
+import 'package:prueba/screens/profile/screen/PendingRequest.dart';
 import 'package:prueba/screens/projects/create_project_screen.dart';
 import 'services/auth_service.dart';
 import 'screens/auth/login_screen.dart';
@@ -16,7 +20,16 @@ import 'screens/splash_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        //ChangeNotifierProvider(create: (_) => BadgeProvider()),
+        ChangeNotifierProvider(create: (_) => BadgeProvider()..loadBadges()),
+        // Otros providers...
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -104,6 +117,9 @@ class MyApp extends StatelessWidget {
         '/create_project': (context) => const CreateProjectScreen(),
         '/profile': (context) => const FreelancerProfileScreen(),
         '/clientProfile': (context) => const ClientProfileScreen(),
+        '/assignedProjects': (context) => const AssignedProjectsScreen(),
+        '/pendingRequests': (context) => const PendingRequestsScreen(),
+        //'/badget': (context) => const BadgeListScreen(),
       },
     );
   }

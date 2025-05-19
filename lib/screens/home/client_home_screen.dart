@@ -192,19 +192,25 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
                     const SizedBox(height: 12),
                     Expanded(
                       child: StreamBuilder<QuerySnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection('projects')
-                            .where('clientId', isEqualTo: user!.uid)
-                            .snapshots(),
+                        stream:
+                            FirebaseFirestore.instance
+                                .collection('projects')
+                                .where('clientId', isEqualTo: user!.uid)
+                                .snapshots(),
                         builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return const Center(child: CircularProgressIndicator());
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
                           }
 
                           final projects = snapshot.data?.docs ?? [];
 
                           if (projects.isEmpty) {
-                            return const Center(child: Text('No tienes proyectos creados aún.'));
+                            return const Center(
+                              child: Text('No tienes proyectos creados aún.'),
+                            );
                           }
 
                           return ListView.builder(
@@ -215,21 +221,32 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
                               final title = project['title'] ?? 'Sin título';
 
                               return Card(
-                                margin: const EdgeInsets.symmetric(vertical: 10),
+                                margin: const EdgeInsets.symmetric(
+                                  vertical: 10,
+                                ),
                                 elevation: 4,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: ExpansionTile(
-                                  title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  title: Text(
+                                    title,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                   children: [
                                     StreamBuilder<QuerySnapshot>(
-                                      stream: FirebaseFirestore.instance
-                                          .collection('projects')
-                                          .doc(projectId)
-                                          .collection('requests')
-                                          .where('status', isEqualTo: 'pending') // solo pendientes
-                                          .snapshots(),
+                                      stream:
+                                          FirebaseFirestore.instance
+                                              .collection('projects')
+                                              .doc(projectId)
+                                              .collection('requests')
+                                              .where(
+                                                'status',
+                                                isEqualTo: 'pending',
+                                              ) // solo pendientes
+                                              .snapshots(),
                                       builder: (context, requestSnapshot) {
                                         if (!requestSnapshot.hasData) {
                                           return const Padding(
@@ -238,62 +255,138 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
                                           );
                                         }
 
-                                        final requests = requestSnapshot.data!.docs;
+                                        final requests =
+                                            requestSnapshot.data!.docs;
 
                                         if (requests.isEmpty) {
                                           return const Padding(
                                             padding: EdgeInsets.all(16.0),
-                                            child: Text('No hay solicitudes aún.'),
+                                            child: Text(
+                                              'No hay solicitudes aún.',
+                                            ),
                                           );
                                         }
 
                                         return Column(
-                                          children: requests.map((doc) {
-                                            final freelancerId = doc['freelancerId'];
-                                            final requestedAt = doc['requestedAt']?.toDate();
+                                          children:
+                                              requests.map((doc) {
+                                                final freelancerId =
+                                                    doc['freelancerId'];
+                                                final requestedAt =
+                                                    doc['requestedAt']
+                                                        ?.toDate();
 
-                                            return FutureBuilder<DocumentSnapshot>(
-                                              future: FirebaseFirestore.instance
-                                                  .collection('users')
-                                                  .doc(freelancerId)
-                                                  .get(),
-                                              builder: (context, userSnapshot) {
-                                                if (!userSnapshot.hasData) {
-                                                  return const ListTile(title: Text('Cargando freelancer...'));
-                                                }
-
-                                                final freelancerData = userSnapshot.data!;
-                                                final freelancerName = freelancerData['name'] ?? 'Freelancer';
-
-                                                return ListTile(
-                                                  title: Text(freelancerName),
-                                                  subtitle: requestedAt != null
-                                                      ? Text('Solicitado el: ${requestedAt.toLocal()}')
-                                                      : null,
-                                                  trailing: ElevatedButton(
-                                                    onPressed: () async {
-                                                      await FirebaseFirestore.instance
-                                                          .collection('projects')
-                                                          .doc(projectId)
-                                                          .collection('requests')
+                                                return FutureBuilder<
+                                                  DocumentSnapshot
+                                                >(
+                                                  future:
+                                                      FirebaseFirestore.instance
+                                                          .collection('users')
                                                           .doc(freelancerId)
-                                                          .update({'status': 'approved'});
+                                                          .get(),
+                                                  builder: (
+                                                    context,
+                                                    userSnapshot,
+                                                  ) {
+                                                    if (!userSnapshot.hasData) {
+                                                      return const ListTile(
+                                                        title: Text(
+                                                          'Cargando freelancer...',
+                                                        ),
+                                                      );
+                                                    }
 
-                                                      await FirebaseFirestore.instance
-                                                          .collection('projects')
-                                                          .doc(projectId)
-                                                          .update({'freelancerId': freelancerId});
-                                                    },
-                                                    style: ElevatedButton.styleFrom(
-                                                      backgroundColor: Colors.green,
-                                                      foregroundColor: Colors.white,
-                                                    ),
-                                                    child: const Text('Aprobar'),
-                                                  ),
+                                                    final freelancerData =
+                                                        userSnapshot.data!;
+                                                    final freelancerName =
+                                                        freelancerData['name'] ??
+                                                        'Freelancer';
+
+                                                    return ListTile(
+                                                      title: Text(
+                                                        freelancerName,
+                                                      ),
+                                                      subtitle:
+                                                          requestedAt != null
+                                                              ? Text(
+                                                                'Solicitado el: ${requestedAt.toLocal()}',
+                                                              )
+                                                              : null,
+                                                      trailing: ElevatedButton(
+                                                        onPressed: () async {
+                                                          // 1. Aceptar la solicitud actual
+                                                          await FirebaseFirestore
+                                                              .instance
+                                                              .collection(
+                                                                'projects',
+                                                              )
+                                                              .doc(projectId)
+                                                              .collection(
+                                                                'requests',
+                                                              )
+                                                              .doc(freelancerId)
+                                                              .update({
+                                                                'status':
+                                                                    'accepted',
+                                                              });
+
+                                                          // 2. Asignar el freelancer al proyecto
+                                                          await FirebaseFirestore
+                                                              .instance
+                                                              .collection(
+                                                                'projects',
+                                                              )
+                                                              .doc(projectId)
+                                                              .update({
+                                                                'freelancerId':
+                                                                    freelancerId,
+                                                              });
+
+                                                          // 3. Rechazar otras solicitudes
+                                                          final allRequests =
+                                                              await FirebaseFirestore
+                                                                  .instance
+                                                                  .collection(
+                                                                    'projects',
+                                                                  )
+                                                                  .doc(
+                                                                    projectId,
+                                                                  )
+                                                                  .collection(
+                                                                    'requests',
+                                                                  )
+                                                                  .get();
+
+                                                          for (var doc
+                                                              in allRequests
+                                                                  .docs) {
+                                                            if (doc.id !=
+                                                                freelancerId) {
+                                                              await doc
+                                                                  .reference
+                                                                  .update({
+                                                                    'status':
+                                                                        'rejected',
+                                                                  });
+                                                            }
+                                                          }
+                                                        },
+
+                                                        style:
+                                                            ElevatedButton.styleFrom(
+                                                              backgroundColor:
+                                                                  Colors.green,
+                                                              foregroundColor:
+                                                                  Colors.white,
+                                                            ),
+                                                        child: const Text(
+                                                          'Aprobar',
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
                                                 );
-                                              },
-                                            );
-                                          }).toList(),
+                                              }).toList(),
                                         );
                                       },
                                     ),

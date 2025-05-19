@@ -7,7 +7,9 @@ class AuthService {
 
   // Inicio de sesión con correo y contraseña
   Future<User?> signInWithEmailAndPassword(
-      String email, String password) async {
+    String email,
+    String password,
+  ) async {
     try {
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
@@ -22,28 +24,32 @@ class AuthService {
 
   // Registro de usuarios
   Future<User?> registerWithEmailAndPassword(
-      String email,
-      String password,
-      String name,
-      String userType, // 'client' o 'freelancer'
-      ) async {
+    String email,
+    String password,
+    String name,
+    String userType, // 'client' o 'freelancer'
+    List<String> badgtesId,
+  ) async {
     try {
       // Creación de usuario en Firebase Auth
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(email: email, password: password);
+
+      // Solo agregamos badgesId si el userType es 'client'
+      if (userType == 'freelancer') {
+        badgtesId = ["med0"];
+      } else {
+        badgtesId = [];
+      }
 
       // Guardamos información adicional en Firestore
-      await _firestore
-          .collection('users')
-          .doc(userCredential.user?.uid)
-          .set({
+      await _firestore.collection('users').doc(userCredential.user?.uid).set({
         'uid': userCredential.user?.uid,
         'email': email,
         'name': name,
         'userType': userType,
         'createdAt': FieldValue.serverTimestamp(),
+        'badgtesId': badgtesId,
       });
 
       return userCredential.user;
@@ -76,9 +82,7 @@ class AuthService {
 
   // Actualizar el nombre de usuario en Firestore
   Future<void> updateUserName(String uid, String name) async {
-    await _firestore.collection('users').doc(uid).update({
-      'name': name,
-    });
+    await _firestore.collection('users').doc(uid).update({'name': name});
   }
 
   // Obtener los datos del usuario desde Firestore
