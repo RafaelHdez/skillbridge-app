@@ -22,6 +22,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  List<String> _badgets = [];
 
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -65,6 +66,7 @@ class _RegisterScreenState extends State<RegisterScreen>
           _passwordController.text.trim(),
           _nameController.text.trim(),
           _userType,
+          _badgets,
         );
 
         if (user != null) {

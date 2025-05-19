@@ -1,6 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:prueba/screens/profile/assingBadget/freelancer_badge_assignment_screen.dart';
+import 'package:prueba/screens/profile/badget/badge_provider.dart';
 
 class ClientProfileScreen extends StatefulWidget {
   const ClientProfileScreen({super.key});
@@ -115,6 +118,26 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                                   Icons.group,
                                   'Freelancers',
                                   '${userData!['freelancersCount']}',
+                                  () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) => ChangeNotifierProvider(
+                                              create:
+                                                  (context) => BadgeProvider(),
+                                              child:
+                                                  FreelancerBadgeAssignmentScreen(
+                                                    clientId:
+                                                        FirebaseAuth
+                                                            .instance
+                                                            .currentUser!
+                                                            .uid,
+                                                  ),
+                                            ),
+                                      ),
+                                    );
+                                  },
                                 ),
                                 _circleStat(
                                   Icons.calendar_today,
@@ -202,21 +225,29 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
     );
   }
 
-  Widget _circleStat(IconData icon, String label, String value) {
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 28,
-          backgroundColor: Colors.blue[50],
-          child: Icon(icon, size: 28, color: Colors.blue[900]),
-        ),
-        const SizedBox(height: 6),
-        Text(label, style: const TextStyle(fontSize: 13)),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-      ],
+  Widget _circleStat(
+    IconData icon,
+    String label,
+    String value, [
+    VoidCallback? onTap,
+  ]) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 28,
+            backgroundColor: Colors.blue[50],
+            child: Icon(icon, size: 28, color: Colors.blue[900]),
+          ),
+          const SizedBox(height: 6),
+          Text(label, style: const TextStyle(fontSize: 13)),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
     );
   }
 }
