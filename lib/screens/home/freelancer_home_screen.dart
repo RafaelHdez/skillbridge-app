@@ -225,68 +225,75 @@ class _FreelancerHomeScreenState extends State<FreelancerHomeScreen>
                             );
                           }
 
-                          return ListView.builder(
-                            itemCount: projects.length,
-                            itemBuilder: (context, index) {
-                              final project = projects[index];
-                              return Container(
-                                margin: const EdgeInsets.symmetric(vertical: 8),
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue[50],
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black12,
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      project['title'],
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
+                          return RefreshIndicator(
+                            onRefresh: () async {
+                              setState(() {}); // Fuerza la reconstrucción
+                            },
+                            child: ListView.builder(
+                              itemCount: projects.length,
+                              itemBuilder: (context, index) {
+                                final project = projects[index];
+                                return Container(
+                                  margin: const EdgeInsets.symmetric(
+                                    vertical: 8,
+                                  ),
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue[50],
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black12,
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
                                       ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      project['description'],
-                                      style: const TextStyle(fontSize: 15),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Align(
-                                      alignment: Alignment.bottomRight,
-                                      child: ElevatedButton.icon(
-                                        onPressed:
-                                            () => requestProject(project.id),
-                                        icon: const Icon(Icons.send),
-                                        label: const Text('Solicitar'),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(
-                                            0xFF0D47A1,
-                                          ),
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 20,
-                                            vertical: 12,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              12,
+                                    ],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        project['title'],
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        project['description'],
+                                        style: const TextStyle(fontSize: 15),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Align(
+                                        alignment: Alignment.bottomRight,
+                                        child: ElevatedButton.icon(
+                                          onPressed:
+                                              () => requestProject(project.id),
+                                          icon: const Icon(Icons.send),
+                                          label: const Text('Solicitar'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(
+                                              0xFF0D47A1,
+                                            ),
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 20,
+                                              vertical: 12,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
                                             ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
                           );
                         },
                       ),
