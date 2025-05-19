@@ -22,24 +22,31 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
   }
 
   Future<void> _loadUserData() async {
+    final uid = user!.uid;
+
+    // Obtener datos básicos del usuario
     final doc =
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user!.uid)
-            .get();
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+    // Obtener proyectos asignados directamente desde 'projects'
     final assignedProjects =
         await FirebaseFirestore.instance
             .collection('projects')
-            .where('freelancerId', isEqualTo: user!.uid)
+            .where('freelancerId', isEqualTo: uid)
             .get();
 
-    final assignedCount = assignedProjects.docs.length;
-    final requestsCount = assignedCount;
+    // Obtener solicitudes pendientes desde subcolección 'requests'
+    final pendingRequests =
+        await FirebaseFirestore.instance
+            .collectionGroup('requests')
+            .where('freelancerId', isEqualTo: uid)
+            .where('status', isEqualTo: 'pending')
+            .get();
 
     setState(() {
       userData = doc.data();
-      userData!['requestsCount'] = requestsCount;
-      userData!['assignedCount'] = assignedCount;
+      userData!['assignedCount'] = assignedProjects.docs.length;
+      userData!['requestsCount'] = pendingRequests.docs.length;
       userData!['badges'] = _generateBadges(userData!);
       isLoading = false;
     });
@@ -141,11 +148,23 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
                                   Icons.assignment,
                                   'Asignados',
                                   '${userData!['assignedCount']}',
+                                  onTap: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/assignedProjects',
+                                    );
+                                  },
                                 ),
                                 _circleStat(
                                   Icons.send,
                                   'Solicitados',
                                   '${userData!['requestsCount']}',
+                                  onTap: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/pendingRequests',
+                                    ); // ← nuevo destino
+                                  },
                                 ),
                                 _circleStat(
                                   Icons.calendar_today,
@@ -157,6 +176,7 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
                                           .toString()
                                           .split(' ')[0]
                                       : 'N/A',
+                                  onTap: null, // ← sin acción
                                 ),
                               ],
                             ),
@@ -255,21 +275,29 @@ class _FreelancerProfileScreenState extends State<FreelancerProfileScreen> {
     );
   }
 
-  Widget _circleStat(IconData icon, String label, String value) {
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 28,
-          backgroundColor: Colors.blue[50],
-          child: Icon(icon, size: 28, color: Colors.blue[900]),
-        ),
-        const SizedBox(height: 6),
-        Text(label, style: const TextStyle(fontSize: 13)),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-      ],
+  Widget _circleStat(
+    IconData icon,
+    String label,
+    String value, {
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 28,
+            backgroundColor: Colors.blue[50],
+            child: Icon(icon, size: 28, color: Colors.blue[900]),
+          ),
+          const SizedBox(height: 6),
+          Text(label, style: const TextStyle(fontSize: 13)),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
     );
   }
 }

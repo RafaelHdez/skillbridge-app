@@ -6,6 +6,8 @@ import 'package:prueba/screens/home/client_home_screen.dart';
 import 'package:prueba/screens/home/freelancer_home_screen.dart';
 import 'package:prueba/screens/profile/client_profile.dart';
 import 'package:prueba/screens/profile/freelancer_profile.dart';
+import 'package:prueba/screens/profile/screen/AssignedProjects.dart';
+import 'package:prueba/screens/profile/screen/PendingRequest.dart';
 import 'package:prueba/screens/projects/create_project_screen.dart';
 import 'services/auth_service.dart';
 import 'screens/auth/login_screen.dart';
@@ -104,6 +106,8 @@ class MyApp extends StatelessWidget {
         '/create_project': (context) => const CreateProjectScreen(),
         '/profile': (context) => const FreelancerProfileScreen(),
         '/clientProfile': (context) => const ClientProfileScreen(),
+        '/assignedProjects': (context) => const AssignedProjectsScreen(),
+        '/pendingRequests': (context) => const PendingRequestsScreen(),
       },
     );
   }
