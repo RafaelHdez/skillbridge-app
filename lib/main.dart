@@ -9,6 +9,7 @@ import 'package:prueba/screens/profile/badget/badge_provider.dart';
 import 'package:prueba/screens/profile/client_profile.dart';
 import 'package:prueba/screens/profile/freelancer_profile.dart';
 import 'package:prueba/screens/profile/screen/AssignedProjects.dart';
+import 'package:prueba/screens/profile/screen/CreateProjetc.dart';
 import 'package:prueba/screens/profile/screen/PendingRequest.dart';
 import 'package:prueba/screens/projects/create_project_screen.dart';
 import 'services/auth_service.dart';
@@ -139,6 +140,8 @@ class MyApp extends StatelessWidget {
         '/clientProfile': (context) => const ClientProfileScreen(),
         '/assignedProjects': (context) => const AssignedProjectsScreen(),
         '/pendingRequests': (context) => const PendingRequestsScreen(),
+        '/create_project1': (context) => const ClientProjects1Screen(),
+
         //'/badget': (context) => const BadgeListScreen(),
       },
     );

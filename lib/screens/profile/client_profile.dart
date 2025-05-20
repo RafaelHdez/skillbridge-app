@@ -113,6 +113,12 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                                   Icons.folder,
                                   'Proyectos',
                                   '${userData!['projectsCount']}',
+                                  () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/create_project1',
+                                    ); // 👈 o la ruta correcta
+                                  },
                                 ),
                                 _circleStat(
                                   Icons.group,
