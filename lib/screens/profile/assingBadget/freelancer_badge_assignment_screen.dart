@@ -255,6 +255,7 @@ class _FreelancerBadgeAssignmentScreenState
   }
 
   Widget _buildBadgesList(List<String> badges) {
+    final badgeProvider = Provider.of<BadgeProvider>(context, listen: false);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -263,9 +264,7 @@ class _FreelancerBadgeAssignmentScreenState
           spacing: 8,
           children:
               badges.map((badgeId) {
-                final badge = Provider.of<BadgeProvider>(
-                  context,
-                ).getBadgeById(badgeId);
+                final badge = badgeProvider.getBadgeById(badgeId);
                 return Chip(
                   label: Text(badge?.nombre ?? 'Desconocida'),
                   backgroundColor: badge?.badgeColor.withOpacity(0.2),
