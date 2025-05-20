@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:prueba/screens/profile/assingBadget/project_service.dart';
+import 'package:prueba/screens/profile/badget/badge_model.dart';
 import 'package:prueba/screens/profile/badget/badge_provider.dart';
 
 class FreelancerBadgeAssignmentScreen extends StatefulWidget {
@@ -66,88 +67,134 @@ class _FreelancerBadgeAssignmentScreenState
     showDialog(
       context: context,
       builder:
-          (context) => AlertDialog(
-            title: const Text('Seleccionar Insignia'),
-            content: Consumer<BadgeProvider>(
-              builder: (context, provider, _) {
-                if (provider.isLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+          (context) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            insetPadding: const EdgeInsets.all(24),
+            backgroundColor: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Seleccionar Insignia',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0D47A1),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Consumer<BadgeProvider>(
+                    builder: (context, provider, _) {
+                      if (provider.isLoading) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
 
-                if (provider.error != null) {
-                  return Text(provider.error!);
-                }
+                      if (provider.error != null) {
+                        return Text(provider.error!);
+                      }
 
-                return SizedBox(
-                  width: double.maxFinite,
-                  child: GridView.builder(
-                    shrinkWrap: true,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.8,
-                          mainAxisSpacing: 10,
-                          crossAxisSpacing: 10,
-                        ),
-                    itemCount: provider.badges.length,
-                    itemBuilder: (context, index) {
-                      final badge = provider.badges[index];
-                      final isAssigned = currentBadges.contains(badge.id);
-
-                      return Card(
-                        color:
-                            isAssigned
-                                ? badge.badgeColor.withOpacity(0.1)
-                                : null,
-                        child: InkWell(
-                          onTap:
-                              isAssigned
-                                  ? null
-                                  : () {
-                                    Navigator.pop(context);
-                                    _assignBadge(freelancerId, badge.id);
-                                  },
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.emoji_events,
-                                color:
-                                    isAssigned ? Colors.grey : badge.badgeColor,
-                                size: 40,
+                      return SizedBox(
+                        height: 320,
+                        child: GridView.builder(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 12,
+                                crossAxisSpacing: 12,
+                                childAspectRatio: 0.9,
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                badge.nombre,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
+                          itemCount: provider.badges.length,
+                          itemBuilder: (context, index) {
+                            final badge = provider.badges[index];
+                            final isAssigned = currentBadges.contains(badge.id);
+
+                            return InkWell(
+                              onTap:
+                                  isAssigned
+                                      ? null
+                                      : () {
+                                        Navigator.pop(context);
+                                        _assignBadge(freelancerId, badge.id);
+                                      },
+                              borderRadius: BorderRadius.circular(16),
+                              child: Container(
+                                decoration: BoxDecoration(
                                   color:
-                                      isAssigned ? Colors.grey : Colors.black,
+                                      isAssigned
+                                          ? Colors.grey.shade100
+                                          : badge.badgeColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color:
+                                        isAssigned
+                                            ? Colors.grey.shade300
+                                            : badge.badgeColor,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.emoji_events,
+                                      color:
+                                          isAssigned
+                                              ? Colors.grey
+                                              : badge.badgeColor,
+                                      size: 40,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      badge.nombre,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15,
+                                        color:
+                                            isAssigned
+                                                ? Colors.grey
+                                                : Colors.black,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      badge.descripcion,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.black87,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                badge.descripcion,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(fontSize: 12),
-                                maxLines: 2,
-                              ),
-                            ],
-                          ),
+                            );
+                          },
                         ),
                       );
                     },
                   ),
-                );
-              },
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cerrar'),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        'Cerrar',
+                        style: TextStyle(color: Colors.redAccent),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
     );
   }
@@ -155,16 +202,64 @@ class _FreelancerBadgeAssignmentScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mis Freelancers'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadFreelancers,
+      backgroundColor: const Color(0xFF0D47A1),
+      body: Stack(
+        children: [
+          _buildCurvedBackground(),
+          SafeArea(
+            child: Column(
+              children: [
+                // Header
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          Icons.arrow_back_ios,
+                          color: Colors.white,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Mis Freelancers',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.refresh, color: Colors.white),
+                        onPressed: _loadFreelancers,
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Cuerpo con curva blanca
+                Expanded(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(24),
+                      ),
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    child: _buildContent(),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
-      body: _buildContent(),
     );
   }
 
@@ -183,12 +278,12 @@ class _FreelancerBadgeAssignmentScreenState
 
   Widget _buildFreelancerCard(Map<String, dynamic> freelancer) {
     final badges = List<String>.from(freelancer['badgtesId'] ?? []);
-    print(badges);
-
     return Card(
-      margin: const EdgeInsets.all(8.0),
+      elevation: 3,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -197,11 +292,22 @@ class _FreelancerBadgeAssignmentScreenState
             _buildProjectsList(freelancer),
             const SizedBox(height: 12),
             _buildBadgesList(badges),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed:
-                  () => _showBadgeSelectionDialog(freelancer['uid'], badges),
-              child: const Text('Asignar Insignia'),
+            const SizedBox(height: 16),
+            Align(
+              alignment: Alignment.bottomRight,
+              child: ElevatedButton.icon(
+                onPressed:
+                    () => _showBadgeSelectionDialog(freelancer['uid'], badges),
+                icon: const Icon(Icons.emoji_events),
+                label: const Text('Asignar Insignia'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0D47A1),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -213,41 +319,52 @@ class _FreelancerBadgeAssignmentScreenState
     return Row(
       children: [
         CircleAvatar(
-          backgroundColor: Colors.blue.shade100,
+          backgroundColor: Colors.indigo.shade100,
+          radius: 28,
           child: Text(
-            freelancer['name'].toString().substring(0, 1),
-            style: const TextStyle(fontSize: 20),
+            freelancer['name'].toString().substring(0, 1).toUpperCase(),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
         ),
         const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                freelancer['name'],
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(freelancer['email']),
-            ],
-          ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              freelancer['name'],
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+            Text(
+              freelancer['email'],
+              style: const TextStyle(color: Colors.grey),
+            ),
+          ],
         ),
       ],
     );
   }
 
   Widget _buildProjectsList(Map<String, dynamic> freelancer) {
+    final projects = freelancer['projects'] as List;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Proyectos:', style: TextStyle(fontWeight: FontWeight.bold)),
-        ...(freelancer['projects'] as List).map(
-          (project) => Text(
-            '- ${project['title']} (${project['status']})',
-            style: const TextStyle(fontSize: 14),
+        const Text('Proyectos:', style: TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 6),
+        ...projects.map(
+          (project) => ListTile(
+            dense: true,
+            visualDensity: VisualDensity.compact,
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.work_outline, size: 18),
+            title: Text(project['title'], style: const TextStyle(fontSize: 14)),
+            trailing: Chip(
+              label: Text(
+                project['status'],
+                style: const TextStyle(fontSize: 12),
+              ),
+              backgroundColor: Colors.blue[50],
+            ),
           ),
         ),
       ],
@@ -255,23 +372,83 @@ class _FreelancerBadgeAssignmentScreenState
   }
 
   Widget _buildBadgesList(List<String> badges) {
-    final badgeProvider = Provider.of<BadgeProvider>(context, listen: false);
+    final badgeProvider = Provider.of<BadgeProvider>(context);
+
+    if (badgeProvider.isLoading) {
+      return const CircularProgressIndicator();
+    }
+
+    // ✅ Solo usamos insignias que realmente están disponibles en el Provider
+    final validBadges =
+        badges
+            .map((id) => badgeProvider.getBadgeById(id))
+            .where((badge) => badge != null)
+            .whereType<UserBadge>()
+            .toList();
+
+    if (validBadges.isEmpty) {
+      return const Text('No hay insignias asignadas.');
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Insignias:', style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text('Insignias:', style: TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 6),
         Wrap(
           spacing: 8,
+          runSpacing: 8,
           children:
-              badges.map((badgeId) {
-                final badge = badgeProvider.getBadgeById(badgeId);
+              validBadges.map((UserBadge badge) {
                 return Chip(
-                  label: Text(badge?.nombre ?? 'Desconocida'),
-                  backgroundColor: badge?.badgeColor.withOpacity(0.2),
+                  avatar: const Icon(Icons.emoji_events, size: 16),
+                  label: Text(badge.nombre),
+                  backgroundColor: badge.badgeColor.withOpacity(0.15),
+                  labelStyle: TextStyle(
+                    color: badge.badgeColor,
+                    fontWeight: FontWeight.w500,
+                  ),
                 );
               }).toList(),
         ),
       ],
     );
   }
+}
+
+Widget _buildCurvedBackground() {
+  return Positioned.fill(
+    child: ClipPath(
+      clipper: _CurvedClipper(),
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class _CurvedClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    Path path = Path();
+    path.lineTo(0, size.height * 0.25);
+    path.quadraticBezierTo(
+      size.width / 2,
+      size.height * 0.35,
+      size.width,
+      size.height * 0.25,
+    );
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }

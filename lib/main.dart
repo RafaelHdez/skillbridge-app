@@ -22,15 +22,25 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  // 🔐 Activar App Check con modo debug (importante para desarrollo local)
+  // ✅ Activar App Check en modo producción
+  /*await FirebaseAppCheck.instance.activate(
+    androidProvider: AndroidProvider.playIntegrity,
+    appleProvider: AppleProvider.appAttest,
+  );*/
   await FirebaseAppCheck.instance.activate(
-    androidProvider: AndroidProvider.debug,
-    appleProvider: AppleProvider.debug,
+    androidProvider:
+        bool.fromEnvironment('dart.vm.product')
+            ? AndroidProvider.playIntegrity
+            : AndroidProvider.debug,
   );
 
-  // 🛡️ Imprimir el token de App Check en consola (solo para debug)
-  final appCheckToken = await FirebaseAppCheck.instance.getToken(true);
-  print('🛡️ App Check debug token: $appCheckToken');
+  // ✅ Mostrar el token SOLO en modo debug (útil para agregar dispositivos de prueba)
+  if (!bool.fromEnvironment('dart.vm.product')) {
+    // Solo se ejecuta en modo debug
+    FirebaseAppCheck.instance.getToken(true).then((token) {
+      print('🛡️ App Check debug token (útil para pruebas): $token');
+    });
+  }
 
   runApp(
     MultiProvider(
