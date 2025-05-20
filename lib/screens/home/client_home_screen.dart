@@ -51,7 +51,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
       backgroundColor: const Color(0xFF0D47A1),
       body: Column(
         children: [
-          // AppBar visual
+          // AppBar
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 40, 20, 0),
             child: Row(
@@ -72,36 +72,27 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
                   ),
                   child: PopupMenuButton<String>(
                     icon: const Icon(Icons.menu, color: Colors.white),
-                    elevation: 8,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    offset: const Offset(0, 50),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
                     itemBuilder:
                         (context) => [
-                          PopupMenuItem(
+                          const PopupMenuItem(
                             value: 'profile',
-                            child: Row(
-                              children: const [
-                                Icon(
-                                  Icons.person_outline,
-                                  color: Color(0xFF0D47A1),
-                                ),
-                                SizedBox(width: 10),
-                                Text('Ver perfil'),
-                              ],
+                            child: ListTile(
+                              leading: Icon(
+                                Icons.person_outline,
+                                color: Color(0xFF0D47A1),
+                              ),
+                              title: Text('Ver perfil'),
                             ),
                           ),
                           const PopupMenuDivider(),
-                          PopupMenuItem(
+                          const PopupMenuItem(
                             value: 'logout',
-                            child: Row(
-                              children: const [
-                                Icon(Icons.logout, color: Color(0xFF0D47A1)),
-                                SizedBox(width: 10),
-                                Text('Cerrar sesión'),
-                              ],
+                            child: ListTile(
+                              leading: Icon(
+                                Icons.logout,
+                                color: Color(0xFF0D47A1),
+                              ),
+                              title: Text('Cerrar sesión'),
                             ),
                           ),
                         ],
@@ -134,6 +125,29 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
               ],
             ),
           ),
+          // Botón de crear proyecto
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pushNamed(context, '/create_project');
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Crear nuevo proyecto'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+                foregroundColor: const Color(0xFF0D47A1),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
 
           // Contenido blanco
           Expanded(
@@ -146,265 +160,247 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
                   color: Colors.white,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'Panel del Cliente',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0D47A1),
+                child: StreamBuilder<QuerySnapshot>(
+                  stream:
+                      FirebaseFirestore.instance
+                          .collection('projects')
+                          .where('clientId', isEqualTo: user!.uid)
+                          .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    final projects = snapshot.data?.docs ?? [];
+
+                    final activeProjects =
+                        projects
+                            .where((p) => p['freelancerId'] == null)
+                            .toList();
+                    final inProgressProjects =
+                        projects
+                            .where((p) => p['freelancerId'] != null)
+                            .toList();
+
+                    return SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          sectionHeader('Proyectos Activos'),
+                          if (activeProjects.isEmpty)
+                            noDataText('No tienes proyectos activos'),
+                          ...activeProjects
+                              .map((doc) => _buildProjectCard(doc, true))
+                              .toList(),
+                          const SizedBox(height: 24),
+                          sectionHeader('Proyectos en Proceso'),
+                          if (inProgressProjects.isEmpty)
+                            noDataText('No tienes proyectos en proceso'),
+                          ...inProgressProjects
+                              .map((doc) => _buildProjectCard(doc, false))
+                              .toList(),
+                        ],
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/create_project');
-                      },
-                      icon: const Icon(Icons.add),
-                      label: const Text('Crear nuevo proyecto'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0D47A1),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 14,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Tus Proyectos Activos:',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0D47A1),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: StreamBuilder<QuerySnapshot>(
-                        stream:
-                            FirebaseFirestore.instance
-                                .collection('projects')
-                                .where('clientId', isEqualTo: user!.uid)
-                                .snapshots(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          }
-
-                          final projects = snapshot.data?.docs ?? [];
-
-                          if (projects.isEmpty) {
-                            return const Center(
-                              child: Text('No tienes proyectos creados aún.'),
-                            );
-                          }
-
-                          return ListView.builder(
-                            itemCount: projects.length,
-                            itemBuilder: (context, index) {
-                              final project = projects[index];
-                              final projectId = project.id;
-                              final title = project['title'] ?? 'Sin título';
-
-                              return Card(
-                                margin: const EdgeInsets.symmetric(
-                                  vertical: 10,
-                                ),
-                                elevation: 4,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: ExpansionTile(
-                                  title: Text(
-                                    title,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  children: [
-                                    StreamBuilder<QuerySnapshot>(
-                                      stream:
-                                          FirebaseFirestore.instance
-                                              .collection('projects')
-                                              .doc(projectId)
-                                              .collection('requests')
-                                              .where(
-                                                'status',
-                                                isEqualTo: 'pending',
-                                              ) // solo pendientes
-                                              .snapshots(),
-                                      builder: (context, requestSnapshot) {
-                                        if (!requestSnapshot.hasData) {
-                                          return const Padding(
-                                            padding: EdgeInsets.all(16.0),
-                                            child: CircularProgressIndicator(),
-                                          );
-                                        }
-
-                                        final requests =
-                                            requestSnapshot.data!.docs;
-
-                                        if (requests.isEmpty) {
-                                          return const Padding(
-                                            padding: EdgeInsets.all(16.0),
-                                            child: Text(
-                                              'No hay solicitudes aún.',
-                                            ),
-                                          );
-                                        }
-
-                                        return Column(
-                                          children:
-                                              requests.map((doc) {
-                                                final freelancerId =
-                                                    doc['freelancerId'];
-                                                final requestedAt =
-                                                    doc['requestedAt']
-                                                        ?.toDate();
-
-                                                return FutureBuilder<
-                                                  DocumentSnapshot
-                                                >(
-                                                  future:
-                                                      FirebaseFirestore.instance
-                                                          .collection('users')
-                                                          .doc(freelancerId)
-                                                          .get(),
-                                                  builder: (
-                                                    context,
-                                                    userSnapshot,
-                                                  ) {
-                                                    if (!userSnapshot.hasData) {
-                                                      return const ListTile(
-                                                        title: Text(
-                                                          'Cargando freelancer...',
-                                                        ),
-                                                      );
-                                                    }
-
-                                                    final freelancerData =
-                                                        userSnapshot.data!;
-                                                    final freelancerName =
-                                                        freelancerData['name'] ??
-                                                        'Freelancer';
-
-                                                    return ListTile(
-                                                      title: Text(
-                                                        freelancerName,
-                                                      ),
-                                                      subtitle:
-                                                          requestedAt != null
-                                                              ? Text(
-                                                                'Solicitado el: ${requestedAt.toLocal()}',
-                                                              )
-                                                              : null,
-                                                      trailing: ElevatedButton(
-                                                        onPressed: () async {
-                                                          // 1. Aceptar la solicitud actual
-                                                          await FirebaseFirestore
-                                                              .instance
-                                                              .collection(
-                                                                'projects',
-                                                              )
-                                                              .doc(projectId)
-                                                              .collection(
-                                                                'requests',
-                                                              )
-                                                              .doc(freelancerId)
-                                                              .update({
-                                                                'status':
-                                                                    'accepted',
-                                                              });
-
-                                                          // 2. Asignar el freelancer al proyecto
-                                                          await FirebaseFirestore
-                                                              .instance
-                                                              .collection(
-                                                                'projects',
-                                                              )
-                                                              .doc(projectId)
-                                                              .update({
-                                                                'freelancerId':
-                                                                    freelancerId,
-                                                              });
-
-                                                          // 3. Rechazar otras solicitudes
-                                                          final allRequests =
-                                                              await FirebaseFirestore
-                                                                  .instance
-                                                                  .collection(
-                                                                    'projects',
-                                                                  )
-                                                                  .doc(
-                                                                    projectId,
-                                                                  )
-                                                                  .collection(
-                                                                    'requests',
-                                                                  )
-                                                                  .get();
-
-                                                          for (var doc
-                                                              in allRequests
-                                                                  .docs) {
-                                                            if (doc.id !=
-                                                                freelancerId) {
-                                                              await doc
-                                                                  .reference
-                                                                  .update({
-                                                                    'status':
-                                                                        'rejected',
-                                                                  });
-                                                            }
-                                                          }
-                                                        },
-
-                                                        style:
-                                                            ElevatedButton.styleFrom(
-                                                              backgroundColor:
-                                                                  Colors.green,
-                                                              foregroundColor:
-                                                                  Colors.white,
-                                                            ),
-                                                        child: const Text(
-                                                          'Aprobar',
-                                                        ),
-                                                      ),
-                                                    );
-                                                  },
-                                                );
-                                              }).toList(),
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget sectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF0D47A1),
+        ),
+      ),
+    );
+  }
+
+  Widget noDataText(String msg) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Text(msg, style: const TextStyle(color: Colors.grey)),
+    );
+  }
+
+  Widget _buildProjectCard(DocumentSnapshot project, bool isPending) {
+    final title = project['title'] ?? 'Sin título';
+    final description = project['description'] ?? '';
+    final projectId = project.id;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
+        ],
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: ExpansionTile(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        leading: const Icon(Icons.folder_open, color: Color(0xFF0D47A1)),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+        ),
+        subtitle: Text(
+          isPending
+              ? 'Toca para ver freelancers que han solicitado'
+              : 'Este proyecto ya está en proceso',
+          style: const TextStyle(color: Colors.black54, fontSize: 13),
+        ),
+        children: [
+          if (isPending)
+            _buildFreelancerRequestList(projectId)
+          else
+            _buildAssignedFreelancerInfo(project['freelancerId']),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFreelancerRequestList(String projectId) {
+    return StreamBuilder<QuerySnapshot>(
+      stream:
+          FirebaseFirestore.instance
+              .collection('projects')
+              .doc(projectId)
+              .collection('requests')
+              .where('status', isEqualTo: 'pending')
+              .snapshots(),
+      builder: (context, requestSnapshot) {
+        if (requestSnapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        final requests = requestSnapshot.data?.docs ?? [];
+
+        if (requests.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              '❗ Aún no hay freelancers que hayan solicitado este proyecto.',
+              style: TextStyle(color: Colors.grey),
+            ),
+          );
+        }
+
+        return Column(
+          children:
+              requests.map((doc) {
+                final freelancerId = doc['freelancerId'];
+                final requestedAt = doc['requestedAt']?.toDate();
+
+                return FutureBuilder<DocumentSnapshot>(
+                  future:
+                      FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(freelancerId)
+                          .get(),
+                  builder: (context, userSnapshot) {
+                    if (!userSnapshot.hasData) {
+                      return const ListTile(
+                        title: Text('Cargando freelancer...'),
+                      );
+                    }
+
+                    final freelancer = userSnapshot.data!;
+                    final name = freelancer['name'] ?? 'Freelancer';
+
+                    return ListTile(
+                      leading: const Icon(Icons.person_outline),
+                      title: Text(name),
+                      subtitle:
+                          requestedAt != null
+                              ? Text(
+                                'Solicitado el: ${requestedAt.toLocal().toString().split(' ')[0]}',
+                              )
+                              : null,
+                      trailing: ElevatedButton(
+                        onPressed: () async {
+                          await FirebaseFirestore.instance
+                              .collection('projects')
+                              .doc(projectId)
+                              .collection('requests')
+                              .doc(freelancerId)
+                              .update({'status': 'accepted'});
+
+                          await FirebaseFirestore.instance
+                              .collection('projects')
+                              .doc(projectId)
+                              .update({'freelancerId': freelancerId});
+
+                          final allRequests =
+                              await FirebaseFirestore.instance
+                                  .collection('projects')
+                                  .doc(projectId)
+                                  .collection('requests')
+                                  .get();
+
+                          for (var doc in allRequests.docs) {
+                            if (doc.id != freelancerId) {
+                              await doc.reference.update({
+                                'status': 'rejected',
+                              });
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Aprobar'),
+                      ),
+                    );
+                  },
+                );
+              }).toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildAssignedFreelancerInfo(String freelancerId) {
+    return FutureBuilder<DocumentSnapshot>(
+      future:
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(freelancerId)
+              .get(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        final data = snapshot.data!;
+        final name = data['name'] ?? 'Freelancer';
+        final email = data['email'] ?? '';
+
+        return ListTile(
+          leading: const Icon(Icons.check_circle, color: Colors.green),
+          title: Text(name),
+          subtitle: Text(email),
+        );
+      },
     );
   }
 }
