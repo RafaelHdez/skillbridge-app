@@ -45,7 +45,7 @@ class _FreelancerBadgeAssignmentScreenState
   Future<void> _assignBadge(String freelancerId, String badgeId) async {
     try {
       await _firestore.collection('users').doc(freelancerId).update({
-        'badgtesId': FieldValue.arrayUnion([badgeId]),
+        'badgesId': FieldValue.arrayUnion([badgeId]),
       });
       await _loadFreelancers();
       ScaffoldMessenger.of(context).showSnackBar(

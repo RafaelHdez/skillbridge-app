@@ -60,13 +60,11 @@ class _LoginScreenState extends State<LoginScreen>
           _passwordController.text.trim(),
         );
 
-        if (!mounted) return; // ✅ Asegura que el widget sigue en el árbol
-
         if (user != null) {
+          // 👇 Aquí imprimimos el UID del usuario
+          print('✅ Usuario autenticado: ${user.uid}');
+
           final userDoc = await AuthService().getUserData(user.uid);
-
-          if (!mounted) return; // ✅ Nuevo chequeo tras otro await
-
           final userType = userDoc['userType'];
 
           if (userType == 'freelancer') {
@@ -76,29 +74,11 @@ class _LoginScreenState extends State<LoginScreen>
           }
         }
       } on FirebaseAuthException catch (e) {
-        if (!mounted) return; // ✅ Aquí también
-
-        String errorMessage;
-        switch (e.code) {
-          case 'user-not-found':
-            errorMessage = 'No existe una cuenta con este correo.';
-            break;
-          case 'wrong-password':
-            errorMessage = 'Contraseña incorrecta.';
-            break;
-          case 'invalid-email':
-            errorMessage = 'Correo electrónico no válido.';
-            break;
-          default:
-            errorMessage = 'Error al iniciar sesión. Intenta de nuevo.';
-        }
-
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(errorMessage)));
+        // manejo de errores
       } finally {
-        if (!mounted) return; // ✅ Final también protegido
-        setState(() => _isLoading = false);
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
       }
     }
   }
