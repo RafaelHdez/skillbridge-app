@@ -51,12 +51,60 @@ class _FreelancerBadgeAssignmentScreenState
       });
       await _loadFreelancers();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('✅ Insignia asignada correctamente')),
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.white,
+          elevation: 8,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: Color(0xFF0D47A1), width: 1.5),
+          ),
+          duration: const Duration(seconds: 2),
+          content: Row(
+            children: const [
+              Icon(Icons.check_circle_outline, color: Color(0xFF0D47A1)),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Insignia asignada correctamente',
+                  style: TextStyle(
+                    color: Color(0xFF0D47A1),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('❌ Error: ${e.toString()}')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.white,
+          elevation: 8,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: Color(0xFF0D47A1), width: 1.5),
+          ),
+          duration: const Duration(seconds: 2),
+          content: Row(
+            children: [
+              Icon(Icons.check_circle_outline, color: Color(0xFF0D47A1)),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Error: ${e.toString()}',
+                  style: TextStyle(
+                    color: Color(0xFF0D47A1),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
     }
   }
 
