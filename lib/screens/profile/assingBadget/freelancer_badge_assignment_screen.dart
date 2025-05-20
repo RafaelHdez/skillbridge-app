@@ -27,6 +27,8 @@ class _FreelancerBadgeAssignmentScreenState
   void initState() {
     super.initState();
     _loadFreelancers();
+    final badgeProvider = Provider.of<BadgeProvider>(context, listen: false);
+    badgeProvider.loadBadges(); // ✅ Carga inicial única
   }
 
   Future<void> _loadFreelancers() async {
@@ -45,7 +47,7 @@ class _FreelancerBadgeAssignmentScreenState
   Future<void> _assignBadge(String freelancerId, String badgeId) async {
     try {
       await _firestore.collection('users').doc(freelancerId).update({
-        'badgesId': FieldValue.arrayUnion([badgeId]),
+        'badgtesId': FieldValue.arrayUnion([badgeId]),
       });
       await _loadFreelancers();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -372,65 +374,78 @@ class _FreelancerBadgeAssignmentScreenState
   }
 
   Widget _buildBadgesList(List<String> badges) {
-    final badgeProvider = Provider.of<BadgeProvider>(context);
+    return Consumer<BadgeProvider>(
+      builder: (context, provider, _) {
+        // ✅ Carga inicial única desde el initState del widget padre
+        if (provider.badges.isEmpty && !provider.isLoading) {
+          provider.loadBadges();
+        }
 
-    if (badgeProvider.isLoading) {
-      return const CircularProgressIndicator();
-    }
+        if (provider.isLoading) {
+          return const CircularProgressIndicator();
+        }
 
-    // ✅ Solo usamos insignias que realmente están disponibles en el Provider
-    final validBadges =
-        badges
-            .map((id) => badgeProvider.getBadgeById(id))
-            .where((badge) => badge != null)
-            .whereType<UserBadge>()
-            .toList();
+        if (provider.error != null) {
+          return Text(provider.error!);
+        }
 
-    if (validBadges.isEmpty) {
-      return const Text('No hay insignias asignadas.');
-    }
+        // 🔥 Filtrado optimizado usando Set para O(1) en búsquedas
+        final badgeIds = badges.toSet();
+        final displayedBadges =
+            provider.badges
+                .where((badge) => badgeIds.contains(badge.id))
+                .toList();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Insignias:', style: TextStyle(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 6),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children:
-              validBadges.map((UserBadge badge) {
-                return Chip(
-                  avatar: const Icon(Icons.emoji_events, size: 16),
-                  label: Text(badge.nombre),
-                  backgroundColor: badge.badgeColor.withOpacity(0.15),
-                  labelStyle: TextStyle(
-                    color: badge.badgeColor,
-                    fontWeight: FontWeight.w500,
-                  ),
-                );
-              }).toList(),
-        ),
-      ],
+        if (displayedBadges.isEmpty) {
+          return const Text('No hay insignias asignadas.');
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Insignias:',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children:
+                  displayedBadges.map((UserBadge badge) {
+                    return Chip(
+                      avatar: const Icon(Icons.emoji_events, size: 16),
+                      label: Text(badge.nombre),
+                      backgroundColor: badge.badgeColor.withOpacity(0.15),
+                      labelStyle: TextStyle(
+                        color: badge.badgeColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    );
+                  }).toList(),
+            ),
+          ],
+        );
+      },
     );
   }
-}
 
-Widget _buildCurvedBackground() {
-  return Positioned.fill(
-    child: ClipPath(
-      clipper: _CurvedClipper(),
-      child: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+  Widget _buildCurvedBackground() {
+    return Positioned.fill(
+      child: ClipPath(
+        clipper: _CurvedClipper(),
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _CurvedClipper extends CustomClipper<Path> {

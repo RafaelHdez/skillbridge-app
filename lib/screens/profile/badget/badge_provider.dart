@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:prueba/screens/profile/badget/badge_model.dart';
-import 'package:prueba/screens/profile/badget/badge_repository.dart';
 import 'package:prueba/screens/profile/badget/badge_service.dart';
-import 'package:flutter/material.dart';
 
 class BadgeProvider with ChangeNotifier {
   List<UserBadge> _badges = [];
@@ -15,6 +12,7 @@ class BadgeProvider with ChangeNotifier {
   String? get error => _error;
 
   Future<void> loadBadges() async {
+    if (isLoading || badges.isNotEmpty) return; // ✅ Evita recargas
     try {
       _startLoading();
       _badges = await BadgeService().getAllBadges();
