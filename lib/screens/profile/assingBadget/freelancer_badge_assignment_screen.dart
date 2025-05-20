@@ -27,8 +27,9 @@ class _FreelancerBadgeAssignmentScreenState
   void initState() {
     super.initState();
     _loadFreelancers();
-    final badgeProvider = Provider.of<BadgeProvider>(context, listen: false);
-    badgeProvider.loadBadges(); // ✅ Carga inicial única
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<BadgeProvider>(context, listen: false).loadBadges();
+    });
   }
 
   Future<void> _loadFreelancers() async {
@@ -112,8 +113,6 @@ class _FreelancerBadgeAssignmentScreenState
     String freelancerId,
     List<String> currentBadges,
   ) {
-    final badgeProvider = Provider.of<BadgeProvider>(context, listen: false);
-
     showDialog(
       context: context,
       builder:
@@ -139,12 +138,21 @@ class _FreelancerBadgeAssignmentScreenState
                   const SizedBox(height: 16),
                   Consumer<BadgeProvider>(
                     builder: (context, provider, _) {
-                      if (provider.isLoading) {
+                      // Añadir esto para forzar reconstrucción con datos actualizados
+                      if (provider.badges.isEmpty && !provider.isLoading) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          provider.loadBadges();
+                        });
+                      }
+                      if (provider.badges.isEmpty) {
                         return const Center(child: CircularProgressIndicator());
                       }
 
                       if (provider.error != null) {
-                        return Text(provider.error!);
+                        return SizedBox(
+                          height: 320,
+                          child: Center(child: Text(provider.error!)),
+                        );
                       }
 
                       return SizedBox(
@@ -424,11 +432,6 @@ class _FreelancerBadgeAssignmentScreenState
   Widget _buildBadgesList(List<String> badges) {
     return Consumer<BadgeProvider>(
       builder: (context, provider, _) {
-        // ✅ Carga inicial única desde el initState del widget padre
-        if (provider.badges.isEmpty && !provider.isLoading) {
-          provider.loadBadges();
-        }
-
         if (provider.isLoading) {
           return const CircularProgressIndicator();
         }
@@ -437,7 +440,6 @@ class _FreelancerBadgeAssignmentScreenState
           return Text(provider.error!);
         }
 
-        // 🔥 Filtrado optimizado usando Set para O(1) en búsquedas
         final badgeIds = badges.toSet();
         final displayedBadges =
             provider.badges

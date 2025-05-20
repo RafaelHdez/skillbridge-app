@@ -45,9 +45,7 @@ void main() async {
 
   runApp(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => BadgeProvider()..loadBadges()),
-      ],
+      providers: [ChangeNotifierProvider(create: (_) => BadgeProvider())],
       child: const MyApp(),
     ),
   );
