@@ -16,16 +16,26 @@ import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/splash_screen.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  // 🔐 Activar App Check con modo debug (importante para desarrollo local)
+  await FirebaseAppCheck.instance.activate(
+    androidProvider: AndroidProvider.debug,
+    appleProvider: AppleProvider.debug,
+  );
+
+  // 🛡️ Imprimir el token de App Check en consola (solo para debug)
+  final appCheckToken = await FirebaseAppCheck.instance.getToken(true);
+  print('🛡️ App Check debug token: $appCheckToken');
+
   runApp(
     MultiProvider(
       providers: [
-        //ChangeNotifierProvider(create: (_) => BadgeProvider()),
         ChangeNotifierProvider(create: (_) => BadgeProvider()..loadBadges()),
-        // Otros providers...
       ],
       child: const MyApp(),
     ),
