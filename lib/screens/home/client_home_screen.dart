@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:prueba/screens/chat/chat_screen.dart';
 
 class ClientHomeScreen extends StatefulWidget {
   const ClientHomeScreen({super.key});
@@ -35,14 +36,31 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
   }
 
   Future<void> _loadUserName() async {
-    final doc =
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user!.uid)
-            .get();
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .get();
     setState(() {
       userName = doc['name'] ?? '';
     });
+  }
+
+  Widget _buildChatButton(String projectId, String freelancerId) {
+    return IconButton(
+      icon: const Icon(Icons.chat, color: Color(0xFF0D47A1)),
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatScreen(
+              projectId: projectId,
+              otherUserId: freelancerId,
+              isClient: true,
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -72,30 +90,29 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
                   ),
                   child: PopupMenuButton<String>(
                     icon: const Icon(Icons.menu, color: Colors.white),
-                    itemBuilder:
-                        (context) => [
-                          const PopupMenuItem(
-                            value: 'profile',
-                            child: ListTile(
-                              leading: Icon(
-                                Icons.person_outline,
-                                color: Color(0xFF0D47A1),
-                              ),
-                              title: Text('Ver perfil'),
-                            ),
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'profile',
+                        child: ListTile(
+                          leading: Icon(
+                            Icons.person_outline,
+                            color: Color(0xFF0D47A1),
                           ),
-                          const PopupMenuDivider(),
-                          const PopupMenuItem(
-                            value: 'logout',
-                            child: ListTile(
-                              leading: Icon(
-                                Icons.logout,
-                                color: Color(0xFF0D47A1),
-                              ),
-                              title: Text('Cerrar sesión'),
-                            ),
+                          title: Text('Ver perfil'),
+                        ),
+                      ),
+                      const PopupMenuDivider(),
+                      const PopupMenuItem(
+                        value: 'logout',
+                        child: ListTile(
+                          leading: Icon(
+                            Icons.logout,
+                            color: Color(0xFF0D47A1),
                           ),
-                        ],
+                          title: Text('Cerrar sesión'),
+                        ),
+                      ),
+                    ],
                     onSelected: (value) {
                       if (value == 'profile') {
                         Navigator.pushNamed(context, '/clientProfile');
@@ -161,11 +178,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
                   borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                 ),
                 child: StreamBuilder<QuerySnapshot>(
-                  stream:
-                      FirebaseFirestore.instance
-                          .collection('projects')
-                          .where('clientId', isEqualTo: user!.uid)
-                          .snapshots(),
+                  stream: FirebaseFirestore.instance
+                      .collection('projects')
+                      .where('clientId', isEqualTo: user!.uid)
+                      .snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
@@ -174,13 +190,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
                     final projects = snapshot.data?.docs ?? [];
 
                     final activeProjects =
-                        projects
-                            .where((p) => p['freelancerId'] == null)
-                            .toList();
+                    projects.where((p) => p['freelancerId'] == null).toList();
                     final inProgressProjects =
-                        projects
-                            .where((p) => p['freelancerId'] != null)
-                            .toList();
+                    projects.where((p) => p['freelancerId'] != null).toList();
 
                     return SingleChildScrollView(
                       child: Column(
@@ -266,7 +278,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
           if (isPending)
             _buildFreelancerRequestList(projectId)
           else
-            _buildAssignedFreelancerInfo(project['freelancerId']),
+            _buildAssignedFreelancerInfo(projectId, project['freelancerId']),
         ],
       ),
     );
@@ -274,13 +286,12 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
 
   Widget _buildFreelancerRequestList(String projectId) {
     return StreamBuilder<QuerySnapshot>(
-      stream:
-          FirebaseFirestore.instance
-              .collection('projects')
-              .doc(projectId)
-              .collection('requests')
-              .where('status', isEqualTo: 'pending')
-              .snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('projects')
+          .doc(projectId)
+          .collection('requests')
+          .where('status', isEqualTo: 'pending')
+          .snapshots(),
       builder: (context, requestSnapshot) {
         if (requestSnapshot.connectionState == ConnectionState.waiting) {
           return const Padding(
@@ -302,87 +313,82 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
         }
 
         return Column(
-          children:
-              requests.map((doc) {
-                final freelancerId = doc['freelancerId'];
-                final requestedAt = doc['requestedAt']?.toDate();
+          children: requests.map((doc) {
+            final freelancerId = doc['freelancerId'];
+            final requestedAt = doc['requestedAt']?.toDate();
 
-                return FutureBuilder<DocumentSnapshot>(
-                  future:
-                      FirebaseFirestore.instance
-                          .collection('users')
+            return FutureBuilder<DocumentSnapshot>(
+              future: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(freelancerId)
+                  .get(),
+              builder: (context, userSnapshot) {
+                if (!userSnapshot.hasData) {
+                  return const ListTile(
+                    title: Text('Cargando freelancer...'),
+                  );
+                }
+
+                final freelancer = userSnapshot.data!;
+                final name = freelancer['name'] ?? 'Freelancer';
+
+                return ListTile(
+                  leading: const Icon(Icons.person_outline),
+                  title: Text(name),
+                  subtitle: requestedAt != null
+                      ? Text(
+                    'Solicitado el: ${requestedAt.toLocal().toString().split(' ')[0]}',
+                  )
+                      : null,
+                  trailing: ElevatedButton(
+                    onPressed: () async {
+                      await FirebaseFirestore.instance
+                          .collection('projects')
+                          .doc(projectId)
+                          .collection('requests')
                           .doc(freelancerId)
-                          .get(),
-                  builder: (context, userSnapshot) {
-                    if (!userSnapshot.hasData) {
-                      return const ListTile(
-                        title: Text('Cargando freelancer...'),
-                      );
-                    }
+                          .update({'status': 'accepted'});
 
-                    final freelancer = userSnapshot.data!;
-                    final name = freelancer['name'] ?? 'Freelancer';
+                      await FirebaseFirestore.instance
+                          .collection('projects')
+                          .doc(projectId)
+                          .update({'freelancerId': freelancerId});
 
-                    return ListTile(
-                      leading: const Icon(Icons.person_outline),
-                      title: Text(name),
-                      subtitle:
-                          requestedAt != null
-                              ? Text(
-                                'Solicitado el: ${requestedAt.toLocal().toString().split(' ')[0]}',
-                              )
-                              : null,
-                      trailing: ElevatedButton(
-                        onPressed: () async {
-                          await FirebaseFirestore.instance
-                              .collection('projects')
-                              .doc(projectId)
-                              .collection('requests')
-                              .doc(freelancerId)
-                              .update({'status': 'accepted'});
+                      final allRequests = await FirebaseFirestore.instance
+                          .collection('projects')
+                          .doc(projectId)
+                          .collection('requests')
+                          .get();
 
-                          await FirebaseFirestore.instance
-                              .collection('projects')
-                              .doc(projectId)
-                              .update({'freelancerId': freelancerId});
-
-                          final allRequests =
-                              await FirebaseFirestore.instance
-                                  .collection('projects')
-                                  .doc(projectId)
-                                  .collection('requests')
-                                  .get();
-
-                          for (var doc in allRequests.docs) {
-                            if (doc.id != freelancerId) {
-                              await doc.reference.update({
-                                'status': 'rejected',
-                              });
-                            }
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text('Aprobar'),
-                      ),
-                    );
-                  },
+                      for (var doc in allRequests.docs) {
+                        if (doc.id != freelancerId) {
+                          await doc.reference.update({
+                            'status': 'rejected',
+                          });
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Aprobar'),
+                  ),
                 );
-              }).toList(),
+              },
+            );
+          }).toList(),
         );
       },
     );
   }
 
-  Widget _buildAssignedFreelancerInfo(String freelancerId) {
+  Widget _buildAssignedFreelancerInfo(String projectId, String freelancerId) {
     return FutureBuilder<DocumentSnapshot>(
-      future:
-          FirebaseFirestore.instance
-              .collection('users')
-              .doc(freelancerId)
-              .get(),
+      future: FirebaseFirestore.instance
+          .collection('users')
+          .doc(freelancerId)
+          .get(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const Padding(
@@ -399,6 +405,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
           leading: const Icon(Icons.check_circle, color: Colors.green),
           title: Text(name),
           subtitle: Text(email),
+          trailing: _buildChatButton(projectId, freelancerId),
         );
       },
     );

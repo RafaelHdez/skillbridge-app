@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:prueba/screens/chat/chat_screen.dart';
 
 class FreelancerHomeScreen extends StatefulWidget {
   const FreelancerHomeScreen({super.key});
@@ -10,7 +11,7 @@ class FreelancerHomeScreen extends StatefulWidget {
 }
 
 class _FreelancerHomeScreenState extends State<FreelancerHomeScreen>
-    with TickerProviderStateMixin {  // Cambiado a TickerProviderStateMixin
+    with TickerProviderStateMixin {
   final User? user = FirebaseAuth.instance.currentUser;
   late TabController _tabController;
   late AnimationController _animationController;
@@ -50,6 +51,24 @@ class _FreelancerHomeScreenState extends State<FreelancerHomeScreen>
     setState(() {
       userName = doc['name'] ?? '';
     });
+  }
+
+  Widget _buildChatButton(String projectId, String clientId) {
+    return IconButton(
+      icon: const Icon(Icons.chat, color: Color(0xFF0D47A1)),
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatScreen(
+              projectId: projectId,
+              otherUserId: clientId,
+              isClient: false,
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> requestProject(String projectId) async {
@@ -95,6 +114,8 @@ class _FreelancerHomeScreenState extends State<FreelancerHomeScreen>
   }
 
   Widget _buildProjectCard(DocumentSnapshot project, {VoidCallback? onRequest}) {
+    final hasClient = project['clientId'] != null;
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(16),
@@ -112,12 +133,21 @@ class _FreelancerHomeScreenState extends State<FreelancerHomeScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            project['title'],
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  project['title'],
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              if (onRequest == null && hasClient)  // Cambio realizado aquí
+                _buildChatButton(project.id, project['clientId']),
+            ],
           ),
           const SizedBox(height: 8),
           Text(
@@ -304,7 +334,7 @@ class _FreelancerHomeScreenState extends State<FreelancerHomeScreen>
                               stream: FirebaseFirestore.instance
                                   .collectionGroup('requests')
                                   .where('freelancerId', isEqualTo: user!.uid)
-                                  .where('status', isEqualTo: 'pending') // Filtrar solo pendientes
+                                  .where('status', isEqualTo: 'pending')
                                   .snapshots(),
                               builder: (context, snapshot) {
                                 if (snapshot.hasError) {
